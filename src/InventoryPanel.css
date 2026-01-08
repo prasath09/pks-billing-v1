@@ -1,0 +1,118 @@
+/* ==============================
+   Inventory Panel Layout + Styles
+   ============================== */
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin-top: 8px;
+}
+
+/* Three-column row for Add Item section */
+.row-3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 12px;
+}
+
+/* Vertical stack for buttons / small blocks */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Typography helpers */
+.small {
+  font-size: 12px;
+  color: #555;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+/* Inputs and labels */
+label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+input[type="text"],
+input[type="date"],
+input:not([type]) {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+/* Buttons */
+.btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #e5e7eb;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.btn.primary:hover {
+  background: #2563eb;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+th {
+  background: #f3f4f6;
+  text-align: left;
+  font-weight: 600;
+}
+
+tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* Make the remove button column centered */
+td.center .btn {
+  padding: 4px 8px;
+}

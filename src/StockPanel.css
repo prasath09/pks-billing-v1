@@ -1,0 +1,19 @@
+.stock-wrap { padding: 12px; }
+.stock-top { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.stock-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+
+.stock-search { display: flex; gap: 8px; align-items: center; }
+.stock-search input { width: 320px; padding: 8px 10px; }
+
+.stock-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.stock-import { display: flex; gap: 8px; align-items: center; }
+
+.stock-metric { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; min-width: 180px; }
+.stock-metric .k { font-size: 12px; opacity: 0.7; }
+.stock-metric .v { font-size: 18px; font-weight: 700; margin-top: 4px; }
+
+.stock-table { margin-top: 12px; overflow: auto; border: 1px solid #e6e6e6; border-radius: 12px; }
+.stock-table table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.stock-table th, .stock-table td { border-bottom: 1px solid #eee; padding: 10px; }
+.stock-table th { position: sticky; top: 0; background: #fafafa; z-index: 1; text-align: left; }
+.num { text-align: right; }
