@@ -1,4 +1,6 @@
+
 # main.py — Steel Billing + Inventory (MySQL-backed)
+# DEPLOY TRIGGER - Jan 2026
 
 import os
 import os
