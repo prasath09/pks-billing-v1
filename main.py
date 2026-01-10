@@ -33,10 +33,6 @@ PURCHASE_COLUMNS = ["ITEM NAME", "QTY", "GST %", "PRICE", "DATE", "BILL NO", "RO
 # ============================== DB helpers ==============================
 
 
-
-# ============================== DB helpers ==============================
-
-
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 DB_USER = os.getenv("DB_USER")
@@ -69,6 +65,7 @@ print(
     f"DB CONNECT → host={DB_HOST}, port={DB_PORT}, db={DB_NAME}"
 )
 
+
 def _init_db():
     """
     Just ensure the database is reachable.
@@ -87,12 +84,6 @@ def _init_db():
 
 # ============================== Utils ==============================
 
-@app.get("/")
-def root():
-    return {
-        "status": "OK",
-        "message": "PKS Billing Backend Running"
-    }
 
 def _norm_name(name: str) -> str:
     return (name or "").strip().lower()
@@ -634,19 +625,10 @@ class SaleItemPayload(BaseModel):
     price: float
     gst: float = 0
 
-class SaleItemPayload(BaseModel):
-    item_name: str
-    qty: float
-    price: float
-    gst: float
-    hsn: Optional[str] = None
-    unit: Optional[str] = "KG"
-
 
 class SaleCreatePayload(BaseModel):
-    # ===== EXISTING =====
     account_id: int
-    bill_no: Optional[str] = None
+    bill_no: str
     date: str
     party_name: str = ""
 
@@ -673,17 +655,8 @@ class SaleCreatePayload(BaseModel):
     buyer_state: Optional[str] = None
     buyer_state_code: Optional[str] = None
 
-    # ===== NEW (REQUIRED) =====
-    invoice_type: str  # "B2C" or "B2B"
-
-    # 🚚 Transport / E-way
-    eway_no: Optional[str] = None
-    vehicle_no: Optional[str] = None
-    kms: Optional[int] = None
-    from_date: Optional[str] = None
-    to_date: Optional[str] = None
-
     items: List[SaleItemPayload]
+
 
 class PurchaseReturnItem(BaseModel):
     purchase_id: int
@@ -1133,44 +1106,6 @@ def purchases_last(name: str):
 
 # ---------- Sales FIFO ----------
 
-def _normalize_invoice_type(v):
-    if not v:
-        return "B2C"
-    v = v.upper().strip()
-    if v in ("B2C", "B TO C", "BTOC"):
-        return "B2C"
-    if v in ("B2B", "B TO B", "BTOB"):
-        return "B2B"
-    return "B2C"
-
-def _next_bill_no(cur, invoice_type):
-    prefix = "PKS-C-" if invoice_type == "B2C" else "PKS-B-"
-
-    cur.execute(
-        """
-        SELECT bill_no
-        FROM sales
-        WHERE invoice_type = %s
-        ORDER BY id DESC
-        LIMIT 1
-        """,
-        (invoice_type,),
-    )
-    row = cur.fetchone()
-
-    if not row:
-        return f"{prefix}001"
-
-    last = row["bill_no"].replace(prefix, "")
-    try:
-        n = int(last) + 1
-    except:
-        n = 1
-
-    return f"{prefix}{str(n).zfill(3)}"
-
-
-
 @app.post("/sales/create_fifo")
 def create_sale_fifo(payload: SaleCreatePayload):
     if not payload.items:
@@ -1184,262 +1119,8 @@ def create_sale_fifo(payload: SaleCreatePayload):
     conn.autocommit = False
     cur = conn.cursor(dictionary=True)
 
-    try:
-        # ==================================================
-        # 1. Invoice Type + Bill Number (BACKEND CONTROLLED)
-        # ==================================================
-        invoice_type = _normalize_invoice_type(payload.invoice_type)
-        bill_no = _next_bill_no(cur, invoice_type)
-
-        print("Invoice Type:", invoice_type)
-        print("Bill No:", bill_no)
-        print("E-Way:", payload.eway_no)
-        print("Vehicle:", payload.vehicle_no)
-        print("KMs:", payload.kms)
-        print("From:", payload.from_date, "To:", payload.to_date)
-
-        # ==================================================
-        # 2. Insert SALES header
-        # ==================================================
-        cur.execute(
-            """
-            INSERT INTO sales (
-                bill_no, invoice_type, date,
-                account_id, party_name,
-
-                grand_total, taxable, discount_amount,
-                discounted_taxable, gst_amount, round_off,
-
-                paid_now, balance, payment_mode,
-
-                split_enabled,
-                split1_amount, split1_mode, split1_ref,
-                split2_amount, split2_mode, split2_ref,
-
-                buyer_gstin, buyer_state, buyer_state_code,
-
-                eway_no, vehicle_no, kms, from_date, to_date,
-
-                company_id
-            )
-            VALUES (
-                %s,%s,%s,
-                %s,%s,
-
-                %s,%s,%s,
-                %s,%s,%s,
-
-                %s,%s,%s,
-
-                %s,
-                %s,%s,%s,
-                %s,%s,%s,
-
-                %s,%s,%s,
-
-                %s,%s,%s,%s,%s,
-
-                %s
-            )
-            """,
-            (
-                bill_no,
-                invoice_type,
-                norm_date,
-
-                payload.account_id,
-                payload.party_name or "",
-
-                payload.grand_total,
-                payload.taxable,
-                payload.discount_amount,
-                payload.discounted_taxable,
-                payload.gst_amount,
-                payload.round_off,
-
-                payload.paid_now,
-                payload.balance,
-                _null(payload.payment_mode),
-
-                1 if payload.split_enabled else 0,
-                payload.split1_amount,
-                _null(payload.split1_mode),
-                _null(payload.split1_ref),
-                payload.split2_amount,
-                _null(payload.split2_mode),
-                _null(payload.split2_ref),
-
-                _null(payload.buyer_gstin),
-                _null(payload.buyer_state),
-                _null(payload.buyer_state_code),
-
-                _null(payload.eway_no),
-                _null(payload.vehicle_no),
-                payload.kms,
-                _null(payload.from_date),
-                _null(payload.to_date),
-
-                1,  # company_id
-            ),
-        )
-
-        sale_id = cur.lastrowid
-
-        # ==================================================
-        # 3. SALE ITEMS + FIFO STOCK CONSUMPTION
-        # ==================================================
-        row_no = 1
-
-        for line in payload.items:
-            item_name = line.item_name.strip()
-            qty = float(line.qty)
-            rate = float(line.price)
-            gst = float(line.gst)
-
-            if not item_name or qty <= 0:
-                continue
-
-            # Fetch item
-            cur.execute(
-                """
-                SELECT id, item_name, hsn_code, unit, stock_qty
-                FROM items_s
-                WHERE LOWER(item_name) = %s
-                LIMIT 1
-                """,
-                (item_name.lower(),),
-            )
-            item = cur.fetchone()
-            if not item:
-                raise HTTPException(status_code=404, detail=f"Item not found: {item_name}")
-
-            if item["stock_qty"] < qty:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Insufficient stock for {item_name}",
-                )
-
-            line_amount = qty * rate
-
-            # Insert sale_items
-            cur.execute(
-                """
-                INSERT INTO sale_items (
-                    sale_id, item_id, row_no,
-                    item_name, hsn_code, unit,
-                    qty, sale_rate, gst_percent, line_amount
-                )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                """,
-                (
-                    sale_id,
-                    item["id"],
-                    row_no,
-                    item["item_name"],
-                    item["hsn_code"],
-                    item["unit"] or "KG",
-                    qty,
-                    rate,
-                    gst,
-                    line_amount,
-                ),
-            )
-
-            sale_item_id = cur.lastrowid
-            row_no += 1
-
-            # FIFO batches
-            cur.execute(
-                """
-                SELECT id, remaining_qty
-                FROM purchases_s
-                WHERE item_id = %s AND remaining_qty > 0
-                ORDER BY date ASC, id ASC
-                FOR UPDATE
-                """,
-                (item["id"],),
-            )
-
-            remaining = qty
-            for batch in cur.fetchall():
-                if remaining <= 0:
-                    break
-
-                use_qty = min(batch["remaining_qty"], remaining)
-
-                cur.execute(
-                    """
-                    INSERT INTO sale_lines
-                    (sale_id, sale_item_id, item_id, purchase_id,
-                     qty_sold, sale_rate, gst_percent)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s)
-                    """,
-                    (
-                        sale_id,
-                        sale_item_id,
-                        item["id"],
-                        batch["id"],
-                        use_qty,
-                        rate,
-                        gst,
-                    ),
-                )
-
-                cur.execute(
-                    """
-                    UPDATE purchases_s
-                    SET remaining_qty = remaining_qty - %s
-                    WHERE id = %s
-                    """,
-                    (use_qty, batch["id"]),
-                )
-
-                remaining -= use_qty
-
-            # Update item stock
-            cur.execute(
-                """
-                UPDATE items_s
-                SET stock_qty = stock_qty - %s
-                WHERE id = %s
-                """,
-                (qty, item["id"]),
-            )
-
-        conn.commit()
-
-        return {
-            "ok": True,
-            "sale_id": sale_id,
-            "bill_no": bill_no,
-            "invoice_type": invoice_type,
-            "message": "Sale created successfully with FIFO",
-        }
-
-    except Exception as e:
-        conn.rollback()
-        print("DB ERROR:", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-    finally:
-        cur.close()
-        conn.close()
-
-
-@app.post("/sales/create_fifo01")
-def create_sale_fifo(payload: SaleCreatePayload):
-    if not payload.items:
-        raise HTTPException(status_code=400, detail="No items in sale")
-
-    norm_date = _normalize_date_str(payload.date)
-    if not norm_date:
-        raise HTTPException(status_code=400, detail="Invalid sale date")
-
-    conn = _get_connection()
-    conn.autocommit = False
-    cur = conn.cursor(dictionary=True)
-
-  
+    def _null(x):
+        return x if x not in ("", None, "null", "None") else None
 
     party_name = _null(payload.party_name)
     payment_mode = _null(payload.payment_mode)
@@ -1699,14 +1380,6 @@ def create_sale_fifo(payload: SaleCreatePayload):
         conn.close()
 
 
-# =======================
-# GLOBAL HELPERS (REQUIRED)
-# =======================
-
-def _null(x):
-    return x if x not in ("", None, "null", "None") else None
-
-
 @app.post("/sales/create_fifo00")
 def create_sale_fifo(payload: SaleCreatePayload):
     if not payload.items:
@@ -1720,6 +1393,9 @@ def create_sale_fifo(payload: SaleCreatePayload):
     conn.autocommit = False
     cur = conn.cursor(dictionary=True)
 
+    def _null(x):
+        return x if x not in ("", None, "null", "None") else None
+
     party_name = _null(payload.party_name)
     payment_mode = _null(payload.payment_mode)
     split1_mode = _null(payload.split1_mode)
@@ -1729,12 +1405,6 @@ def create_sale_fifo(payload: SaleCreatePayload):
     buyer_gstin = _null(payload.buyer_gstin)
     buyer_state = _null(payload.buyer_state)
     buyer_state_code = _null(payload.buyer_state_code)
-    eway_no = _null(payload.eway_no)
-    vehicle_no = _null(payload.vehicle_no)
-    kms = payload.kms if payload.kms not in ("", None) else None
-    from_date = _null(payload.from_date)
-    to_date = _null(payload.to_date)
-
 
     try:
         # BLOCK 1: sales header
@@ -1764,11 +1434,6 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 buyer_gstin,
                 buyer_state,
                 buyer_state_code
-                eway_no,
-                vehicle_no,
-                kms,
-                from_date,
-                to_date,
             )
             VALUES (
                 %s, %s, %s,
@@ -1777,8 +1442,6 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 %s, %s, %s,
                 %s, %s, %s,
                 %s, %s, %s,
-                %s, %s, %s,
-                %s, %s,
                 %s, %s, %s,
                 %s, %s
             )
@@ -1807,11 +1470,6 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 buyer_gstin,
                 buyer_state,
                 buyer_state_code,
-                eway_no,
-                vehicle_no,
-                kms,
-                from_date,
-                to_date,
             ),
         )
         sale_id = cur.lastrowid
