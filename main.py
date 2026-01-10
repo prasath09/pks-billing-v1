@@ -87,6 +87,12 @@ def _init_db():
 
 # ============================== Utils ==============================
 
+@app.get("/")
+def root():
+    return {
+        "status": "OK",
+        "message": "PKS Billing Backend Running"
+    }
 
 def _norm_name(name: str) -> str:
     return (name or "").strip().lower()
