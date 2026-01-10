@@ -34,11 +34,20 @@ PURCHASE_COLUMNS = ["ITEM NAME", "QTY", "GST %", "PRICE", "DATE", "BILL NO", "RO
 
 
 
+# ============================== DB helpers ==============================
+
+
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
 missing = [k for k, v in {
-    "DB_HOST": "localhost",
-    "DB_USER": "root",
-    "DB_PASSWORD": "admin@2025",
-    "DB_NAME": "billing",
+    "DB_HOST": DB_HOST,
+    "DB_USER": DB_USER,
+    "DB_PASSWORD": DB_PASSWORD,
+    "DB_NAME": DB_NAME,
 }.items() if not v]
 
 if missing:
@@ -46,18 +55,19 @@ if missing:
 
 def _get_connection(db: bool = True):
     kwargs = {
-        "host": "localhost",
-        "port": 3306,
-        "user": "root",
-        "password": "admin@2025",
+        "host": DB_HOST,
+        "port": DB_PORT,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
     }
 
     if db:
-        kwargs["database"] = "billing"
+        kwargs["database"] = DB_NAME
+
     return mysql.connector.connect(**kwargs)
 print(
-    f"DB CONNECT → host={'localhost'}, port={3306}, db={'billing'}"
-)
+    f"DB CONNECT → host={DB_HOST}, port={DB_PORT}, db={DB_NAME}"
+
 
 
 def _init_db():
