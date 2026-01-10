@@ -1,4 +1,3 @@
-
 # main.py — Steel Billing + Inventory (MySQL-backed)
 # DEPLOY TRIGGER - Jan 2026
 
@@ -33,11 +32,11 @@ PURCHASE_COLUMNS = ["ITEM NAME", "QTY", "GST %", "PRICE", "DATE", "BILL NO", "RO
 # ============================== DB helpers ==============================
 
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = int(os.getenv("DB_PORT", "3306"))
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("MYSQLHOST")
+DB_PORT = int(os.getenv("MYSQLPORT", "3306"))
+DB_USER = os.getenv("MYSQLUSER", "root")
+DB_PASSWORD = os.getenv("MYSQLPASSWORD")
+DB_NAME = os.getenv("MYSQL_DATABASE")
 
 missing = [k for k, v in {
     "DB_HOST": DB_HOST,
