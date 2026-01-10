@@ -67,8 +67,7 @@ def _get_connection(db: bool = True):
     return mysql.connector.connect(**kwargs)
 print(
     f"DB CONNECT → host={DB_HOST}, port={DB_PORT}, db={DB_NAME}"
-
-
+)
 
 def _init_db():
     """
