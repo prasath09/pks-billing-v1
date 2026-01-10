@@ -264,7 +264,7 @@ app = FastAPI(title="Inventory MySQL API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://billing-pks-v1-production.up.railway.app","https://pks-billing-v1-git-main-prasath09s-projects.vercel.app"],
+    allow_origins=["https://billing-pks-v1-production.up.railway.app","https://pks-billing-v1.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
