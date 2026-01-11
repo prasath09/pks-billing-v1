@@ -37,14 +37,14 @@ hr.sep { border:none; border-top:1px solid var(--border); margin: 14px 0; }
 `;
 
 const defaultCompany = {
-  name: "Shri Krishna Corporation",
-  addr1: "127/4C, Chennai Bypass Road, Opp. to Apollo Hospital",
-  addr2: "Senthaneerpuram",
-  city: "Tiruchirappalli",
+  name: "P.KARTHIKEYAN STEEL",
+  addr1: "Nethaji Road",
+  addr2: "Thiruvarur",
+  city: "Thiruvarur",
   state: "Tamil Nadu",
   stateCode: "33",
   gstin: "33AEFSR7230F1ZC",
-  email: "shrikrishnacorporation2022@gmail.com",
+  email: "karthikeyansteels@gmail.com",
   phone: "",
   mobile: "",
   whatsapp: "",
@@ -64,15 +64,8 @@ export default function App() {
   // ✅ Billing is default active tab
   const [tab, setTab] = useState("billing");
 
-  // Company (localStorage)
-  const [company, setCompany] = useState(() => {
-    const ls = localStorage.getItem("company.v1");
-    return ls ? JSON.parse(ls) : defaultCompany;
-  });
-
-  useEffect(() => {
-    localStorage.setItem("company.v1", JSON.stringify(company));
-  }, [company]);
+  // Company (defaultStorage)
+  const [company, setCompany] = useState(defaultCompany);
 
   const setCompanyField = (k, v) => setCompany((prev) => ({ ...prev, [k]: v }));
 
