@@ -136,6 +136,7 @@ const n = (v) => (isNaN(Number(v)) || !v ? 0 : Number(v));
 export default function BillingPanel({ company, defaultBank, inventory }) {
   // Buyer / consignee / meta
 // Payment receipt reference
+// ADDED PAYMENT RECEIPT NO
 const [paymentReceiptNo, setPaymentReceiptNo] = useState("");
 
 
