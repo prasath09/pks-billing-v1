@@ -616,12 +616,15 @@ class SaleItemPayload(BaseModel):
     item_name: str
     qty: float
     price: float
-    gst: float = 0
+    gst: float
+    hsn: Optional[str] = None
+    unit: Optional[str] = "KG"
 
 
 class SaleCreatePayload(BaseModel):
+    # ===== EXISTING =====
     account_id: int
-    bill_no: str
+    bill_no: Optional[str] = None
     date: str
     party_name: str = ""
 
@@ -648,8 +651,17 @@ class SaleCreatePayload(BaseModel):
     buyer_state: Optional[str] = None
     buyer_state_code: Optional[str] = None
 
-    items: List[SaleItemPayload]
+    # ===== NEW (REQUIRED) =====
+    invoice_type: str  # "B2C" or "B2B"
 
+    # 🚚 Transport / E-way
+    eway_no: Optional[str] = None
+    vehicle_no: Optional[str] = None
+    kms: Optional[int] = None
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+
+    items: List[SaleItemPayload]
 
 class PurchaseReturnItem(BaseModel):
     purchase_id: int
