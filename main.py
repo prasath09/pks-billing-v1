@@ -638,6 +638,7 @@ class SaleCreatePayload(BaseModel):
     paid_now: float = 0
     balance: float = 0
     payment_mode: Optional[str] = None
+    payment_receipt_no: Optional[str] = None
 
     split_enabled: bool = False
     split1_amount: float = 0
@@ -1193,7 +1194,7 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 grand_total, taxable, discount_amount,
                 discounted_taxable, gst_amount, round_off,
 
-                paid_now, balance, payment_mode,
+                paid_now, balance, payment_mode,payment_receipt_no,
 
                 split_enabled,
                 split1_amount, split1_mode, split1_ref,
@@ -1212,7 +1213,8 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 %s,%s,%s,
                 %s,%s,%s,
 
-                %s,%s,%s,
+                %s,%s,%s,%s,
+
 
                 %s,
                 %s,%s,%s,
@@ -1243,6 +1245,7 @@ def create_sale_fifo(payload: SaleCreatePayload):
                 payload.paid_now,
                 payload.balance,
                 _null(payload.payment_mode),
+                _null(payload.payment_receipt_no), 
 
                 1 if payload.split_enabled else 0,
                 payload.split1_amount,

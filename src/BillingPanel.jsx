@@ -135,6 +135,10 @@ const n = (v) => (isNaN(Number(v)) || !v ? 0 : Number(v));
 /** Billing panel */
 export default function BillingPanel({ company, defaultBank, inventory }) {
   // Buyer / consignee / meta
+// Payment receipt reference
+const [paymentReceiptNo, setPaymentReceiptNo] = useState("");
+
+
   const [buyer, setBuyer] = useState({
       account_id: null,
     name: "",
@@ -1133,6 +1137,10 @@ const fillBuyerFromAccount = (acc) => {
                 <tr><td>Terms of Payment</td><td>${escapeHtml(
                   paymentMode || "-"
                 )}</td></tr>
+                <tr>
+                  <td>Payment Receipt No</td>
+                  <td>${escapeHtml(paymentReceiptNo || "-")}</td>
+                </tr>
                 <tr><td>e-Way Bill No</td><td>${escapeHtml(
                   invMeta.ewayNo || "-"
                 )}</td></tr>
@@ -2044,6 +2052,21 @@ const fillBuyerFromAccount = (acc) => {
                 ))}
               </select>
             </div>
+          <div className="small">Payment Receipt No.</div>
+          <div className="right">
+            <textarea
+              value={paymentReceiptNo}
+              onChange={(e) => setPaymentReceiptNo(e.target.value)}
+              placeholder="Enter receipt / UTR / cheque / reference number"
+              rows={2}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                textAlign: "left",
+              }}
+            />
+          </div>
+
           </div>
 
           {/* Split Payments */}
@@ -2282,6 +2305,7 @@ const salePayload = {
   balance: +balanceAfterSplits.toFixed(2),
 
   payment_mode: paymentMode || "",
+  payment_receipt_no: paymentReceiptNo || "",
 
   // items
   items: computed.rows.map((r) => ({
