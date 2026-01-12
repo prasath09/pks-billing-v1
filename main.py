@@ -1146,6 +1146,12 @@ def _next_bill_no(cur, invoice_type):
 
     return f"{prefix}{str(n).zfill(3)}"
 
+def _null(val):
+    if val is None:
+        return None
+    if isinstance(val, str) and val.strip() == "":
+        return None
+    return val
 
 
 @app.post("/sales/create_fifo")
