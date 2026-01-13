@@ -171,7 +171,7 @@ export default function AccountsPanel() {
                 <td>{r.city || ""}</td>
                 <td>{r.state || ""}</td>
                 <td className="center">
-                  <button className="btn" onClick={() => onPick(r)}>Use</button>
+                  <button className="btn" onClick={() => onPick(r)}>Edit</button>
                 </td>
               </tr>
             ))}
