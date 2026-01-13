@@ -3271,6 +3271,7 @@ def return_purchase(p: PurchaseReturnPayload):
             cur.execute("""
                 UPDATE purchases_s
                 SET remaining_qty = remaining_qty - %s
+                        return_datetime = COALESCE(return_datetime, NOW())
                 WHERE id = %s
             """, (it.return_qty, it.purchase_id))
 
